@@ -1,0 +1,238 @@
+{% extends "masterpage.html" %}
+
+{% block content %}
+
+<div class="content content--alt">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="section">
+                    <div class="flex-center-vertical">
+                        <h2>Device List</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="panel panel--loose base-margin-bottom">
+                            <h2 class="subtitle">Filter</h2>
+                            <hr>
+                            <div class="row">
+                                <div class="col-6">
+                                    <!--Dropdown Select-->
+                                    <div class="form-group dropdown">
+                                        <div class="form-group__text select">
+                                            <input class="filter-option" id="ap-model-select" value="{{filtering.curr_model}}"/>
+                                            <label for="ap-model-select">Filter by AP Model</label>
+                                        </div>
+                                        <div class="dropdown__menu">
+                                            <a>--- Select an AP model ---</a>
+                                            {% for model in filtering.models %}
+                                            <a>{{model}}</a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group dropdown">
+                                        <div class="form-group__text select">
+                                            <input class="filter-option" id="rf-profile-select" value="{{filtering.curr_profile}}"/>
+                                            <label for="rf-profile-select">Filter by RF Profile</label>
+                                        </div>
+                                        <div class="dropdown__menu">
+                                            <a>--- Select an RF profile ---</a>
+                                            {% for profile in filtering.profiles %}
+                                            <a>{{profile}}</a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <!--CUSTOMIZE END-->
+
+                                <!-- Button area-->
+                                <div class="col-6">
+                                    <br>
+                                    <button class="btn btn--primary" onclick="filterAPs()">Filter</button>
+                                    <button class="btn btn--primary" onclick="clearFilter()">Clear Filter</button>
+                                </div>
+                            </div>
+
+                        <!--Alert for error message-->
+                            <!--PASS INFO: Pass the following information to the template: error=True/False ; errormessage="xxx" ; errorcode=xxx-->
+                            {% include "alert.html" %}
+                        </div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="row">
+                        {% for ap in access_points %}
+                        <div class="col-lg-3 col-md-6 col-12" profile="{{ ap.rfProfileName }}" model="{{ ap.model }}">
+                            <div class="panel panel--bordered panel--raised panel--loose" style="padding-bottom: 15 em; height: 350px;">
+                                <div class="subtitle">{{ ap.model }}</div>
+                                <small>{{ ap.networkName }}</small>
+                                <div class="section text-center">
+                                    <img class="image-size-128" src="{{ url_for('static', filename='images/' + ap.model + '.png') }}" alt="{{ ap.model }} image">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="text-small">RF PROFILE</div>
+                                        <div class="text-normal">{{ ap.rfProfileName }}</div>
+                                        <div class="text-small base-margin-top">IP ADDRESS</div>
+                                        <div class="text-normal">{{ ap.lanIp }}</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="text-small">SERIAL NUMBER</div>
+                                        <div class="text-normal">{{ ap.serial }}</div>
+                                        <div class="text-small base-margin-top">ADDRESS</div>
+                                        <div class="text-normal">{{ ap.address }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if pagination.page_count > 0 %}
+                    <ul class="pagination">
+                        {% if pagination.page == pagination.first_page or (pagination.page < pagination.first_page + 3) %}
+                            {% if pagination.page == pagination.first_page %}
+                                <li><a class="disabled" href="javascript:paginate({{pagination.first_page}});"><span class="icon-chevron-left-double"></span></a></li>
+                                <li><a class="disabled" href="javascript:paginate({{pagination.previous_page}});"><span class="icon-chevron-left"></span></a></li>
+                            {% else %}
+                                <li><a href="javascript:paginate({{pagination.first_page}});"><span class="icon-chevron-left-double"></span></a></li>
+                                <li><a href="javascript:paginate({{pagination.previous_page}});"><span class="icon-chevron-left"></span></a></li>
+                            {% endif %}
+
+                            {% if pagination.page_count <= 5 %}
+
+                                {% for i in range(pagination.first_page, pagination.last_page + 1) %}
+                                    {% if i == pagination.page %}
+                                        <li class="active"><a href="javascript:paginate({{i}});">{{i}}</a></li>
+                                    {% else %}
+                                        <li><a href="javascript:paginate({{i}});">{{i}}</a></li>
+                                    {% endif%}
+                                {% endfor %}
+
+                                <li><a href="javascript:paginate({{pagination.next_page}});"><span class="icon-chevron-right"></span></a></li>
+
+                                {% if pagination.page_count == 1 %}
+                                    <li><a href="javascript:paginate({{pagination.next_page}});"><span class="icon-chevron-right-double"></span></a></li>
+                                {% else %}
+                                    <li><a href="javascript:paginate({{pagination.last_page}});"><span class="icon-chevron-right-double"></span></a></li>
+                                {% endif %}
+
+                            {% else %}
+
+                                {% for i in range(pagination.first_page, 5) %}
+                                    {% if i == pagination.page %}
+                                        <li class="active"><a href="javascript:paginate({{i}});">{{i}}</a></li>
+                                    {% else %}
+                                        <li><a href="javascript:paginate({{i}});">{{i}}</a></li>
+                                    {% endif%}
+                                {% endfor %}
+
+                                <li><span class="icon-more"></span></li>
+                                <li><a href="javascript:paginate({{pagination.last_page}});">{{pagination.last_page}}</a></li>
+                                <li><a href="javascript:paginate({{pagination.next_page}});"><span class="icon-chevron-right"></span></a></li>
+                                <li><a href="javascript:paginate({{pagination.last_page}});"><span class="icon-chevron-right-double"></span></a></li>
+                            {% endif %}
+
+                        {% elif pagination.page == pagination.last_page or (pagination.page > pagination.last_page - 3)%}
+                            <li><a href="javascript:paginate({{pagination.first_page}});"><span class="icon-chevron-left-double"></span></a></li>
+                            <li><a href="javascript:paginate({{pagination.previous_page}});"><span class="icon-chevron-left"></span></a></li>
+                            <li><a href="javascript:paginate({{pagination.first_page}});">{{pagination.first_page}}</a></li>
+
+                            {% if pagination.page_count <= 5 %}
+                                {% for i in range(pagination.first_page + 1, pagination.last_page + 1) %}
+                                    {% if i == pagination.page %}
+                                        <li class="active"><a href="javascript:paginate({{i}});">{{i}}</a></li>
+                                    {% else %}
+                                        <li><a href="javascript:paginate({{i}});">{{i}}</a></li>
+                                    {% endif%}
+                                {% endfor %}
+
+                            {% else %}
+                                <li><span class="icon-more"></span></li>
+
+                                {% for i in range(pagination.last_page - 3, pagination.last_page + 1) %}
+                                    {% if i == pagination.page %}
+                                        <li class="active"><a href="javascript:paginate({{i}});">{{i}}</a></li>
+                                    {% else %}
+                                        <li><a href="javascript:paginate({{i}});">{{i}}</a></li>
+                                    {% endif%}
+                                {% endfor %}
+                            {% endif %}
+
+                            {% if pagination.page == pagination.last_page %}
+                                <li><a class="disabled" href="javascript:paginate({{pagination.next_page}});"><span class="icon-chevron-right"></span></a></li>
+                                <li><a class="disabled" href="javascript:paginate({{pagination.last_page}});"><span class="icon-chevron-right-double"></span></a></li>
+                            {% else %}
+                                <li><a href="javascript:paginate({{pagination.next_page}});"><span class="icon-chevron-right"></span></a></li>
+                                <li><a href="javascript:paginate({{pagination.last_page}});"><span class="icon-chevron-right-double"></span></a></li>
+                            {% endif %}
+
+                        {% else %}
+                            <li><a href="javascript:paginate({{pagination.first_page}});"><span class="icon-chevron-left-double"></span></a></li>
+                            <li><a href="javascript:paginate({{pagination.previous_page}});"><span class="icon-chevron-left"></span></a></li>
+
+                            {% if pagination.page_count <= 5 %}
+                                {% for i in range(pagination.first_page, pagination.last_page + 1) %}
+                                    {% if i == pagination.page %}
+                                        <li class="active"><a href="javascript:paginate({{i}});">{{i}}</a></li>
+                                    {% else %}
+                                        <li><a href="javascript:paginate({{i}});">{{i}}</a></li>
+                                    {% endif%}
+                                {% endfor %}
+                            {% else %}
+                                <li><a href="javascript:paginate({{pagination.first_page}});">{{pagination.first_page}}</a></li>
+                                <li><span class="icon-more"></span></li>
+
+                                <li><a href="javascript:paginate({{pagination.previous_page}});">{{pagination.previous_page}}</a></li>
+                                <li class="active"><a href="javascript:paginate({{pagination.page}});">{{pagination.page}}</a></li>
+                                <li><a href="javascript:paginate({{pagination.next_page}});">{{pagination.next_page}}</a></li>
+
+                                <li><span class="icon-more"></span></li>
+
+                                <li><a href="javascript:paginate({{pagination.last_page}});">{{pagination.last_page}}</a></li>
+                            {% endif %}
+
+                            <li><a href="javascript:paginate({{pagination.next_page}});"><span class="icon-chevron-right"></span></a></li>
+                            <li><a href="javascript:paginate({{pagination.last_page}});"><span class="icon-chevron-right-double"></span></a></li>
+                        {% endif %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function paginate(page) {
+
+        var ap_model_filter = document.getElementById("ap-model-select").value;
+        var rf_profile_filter = document.getElementById("rf-profile-select").value;
+
+        console.log(`AP model: ${ap_model_filter} and RF profile: ${rf_profile_filter}`);
+
+        window.location.href = `/display/${page}?model=${ap_model_filter}&rf_profile=${rf_profile_filter}`;
+    }
+
+
+    function filterAPs() {
+        var ap_model_filter = document.getElementById("ap-model-select").value;
+        var rf_profile_filter = document.getElementById("rf-profile-select").value;
+
+        console.log(`AP model: ${ap_model_filter} and RF profile: ${rf_profile_filter}`);
+
+        window.location.href = `/display/1?model=${ap_model_filter}&rf_profile=${rf_profile_filter}`;
+    };
+
+    function clearFilter() {
+        var ap_model_filter = "--- Select an AP model ---";
+        var rf_profile_filter = "--- Select an RF profile ---"
+
+        window.location.href = `/display/1?model=${ap_model_filter}&rf_profile=${rf_profile_filter}`;
+    };
+</script>
+{% endblock %}

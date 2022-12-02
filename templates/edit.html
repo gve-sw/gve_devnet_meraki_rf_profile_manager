@@ -1,0 +1,319 @@
+{% extends "masterpage.html" %}
+
+{% block content %}
+
+<div class="content content--alt">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="section">
+                    <div class="flex-center-vertical">
+                        <h2>Update AP RF Profiles</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="panel panel--loose base-margin-bottom">
+                            <h2 class="subtitle">Choose Network</h2>
+                            <hr>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group dropdown">
+                                        <div class="form-group__text select">
+                                            <input class="filter-option" id="network-select" value="--- Select a Network ---"/>
+                                            <label for="rf-profile-select">Choose a network to update APs</label>
+                                        </div>
+                                        <div class="dropdown__menu">
+                                            <a>--- Select a Network ---</a>
+                                            {% for network in networks %}
+                                            <a>{{ network }}</a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr>
+
+                                <!-- Button area-->
+                                <div class="col-6">
+                                    <br>
+                                    <button id="select-network-button" class="btn btn--primary" onclick="filterAPsByNetwork()">Select Network</button>
+                                    <button id="clear-network-button" class="btn btn--primary" onclick="clearNetworkFilter()" style="display: none;">Clear Network Choice</button>
+                                </div>
+                            </div>  
+                        </div>
+                    </div>
+                </div>
+                <div id="edittable-content" class="row" style="display: none;">
+                    <div class="col-6">
+                        <!--Dropdown Select-->
+                        <div class="form-group dropdown">
+                            <div class="form-group__text select">
+                                <input class="filter-option" id="ap-model-select" value="--- Select an AP model ---" />
+                                <label for="ap-model-select">Filter by AP Model</label>
+                            </div>
+                            <div class="dropdown__menu">
+                                <a>--- Select an AP model ---</a>
+                                {% for model in models %}
+                                <a>{{ model }}</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="col-6">
+                        <br>
+                        <button class="btn btn--primary" onclick="filterAPsByModel()">Filter</button>
+                        <button class="btn btn--primary" onclick="clearModelFilter()">Clear Filter</button>
+                    </div>
+                    <div class="col-8">
+                        <div class="section">
+                            <div class="responsive-table">
+                                <table class="table table--lined table--selectable table" id="aps">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                <label class="checkbox">
+                                                    <input id="select-all" type="checkbox">
+                                                    <span class="checkbox__input"></span>
+                                                </label>
+                                            </th>
+                                            <th class="text-center">Serial</th>
+                                            <th class="text-center">Model</th>
+                                            <th class="text-center">Network</th>
+                                            <th class="text-center">RF Profile</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for ap in access_points %}
+                                        <tr model="{{ ap.model }}" network="{{ ap.networkName }}" profile="{{ ap.rfProfileName }}">
+                                            <td>
+                                                <label class="checkbox">
+                                                    <input type="checkbox" name="check-ap" value="{{ ap.serial }}">
+                                                    <span class="checkbox__input"></span>
+                                                </label>
+                                            </td>
+                                            <td class="text-center">{{ ap.serial }}</td>
+                                            <td class="text-center">{{ ap.model }}</td>
+                                            <td class="text-center">{{ ap.networkName }}</td>
+                                            <td class="text-center">{{ ap.rfProfileName }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="section">
+                                <div class="panel">
+                                    <h2 class="subtitle">Available RF Profiles</h2>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <!--Dropdown Select-->
+                                            <div class="form-group dropdown">
+                                                <div class="form-group__text select">
+                                                    <input class="filter-option" id="rf-profile-select" value="--- Select an RF Profile ---" />
+                                                    <label for="rf-profile-select">Choose RF Profile for APs</label>
+                                                </div>
+                                                <div id="default-profiles" class="dropdown__menu" style="display: none;">
+                                                    <a>--- Select an RF Profile ---</a>
+                                                    {% for profile in profile_networks['all'] %}
+                                                    <a>{{ profile.rfProfileName }}</a>
+                                                    {% endfor %}
+                                                </div>
+                                                {% for network in networks %}
+                                                <div id="{{ network }}-profiles" class="dropdown__menu" style="display: none;">
+                                                    <a>--- Select an RF Profile ---</a>
+                                                    {% for profile in profile_networks['all'] %}
+                                                    <a>{{ profile.rfProfileName }}</a>
+                                                    {% endfor %}
+                                                    {% for profile in profile_networks[network] %}
+                                                    <a>{{ profile.rfProfileName }}</a>
+                                                    {% endfor %}
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        <hr>
+
+                                        <!-- Button area-->
+                                        <div class="col-6">
+                                            <br>
+                                            <button class="btn btn--primary" onclick="changeProfile()">Change Profile</button>
+                                        </div>
+                                    </div>  
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function filterAPsByNetwork() {
+        var network_filter = document.getElementById("network-select").value;
+        var aps = document.getElementById("aps").getElementsByTagName('tbody')[0].rows;
+        var profile_id = `${network_filter}-profiles`;
+        var profile_options = document.getElementById(profile_id);
+        var select_button = document.getElementById("select-network-button");
+        var clear_button = document.getElementById("clear-network-button");
+
+        select_button.style.display = "none";
+        clear_button.style.display = "";
+
+        if (profile_options) {
+            profile_options.style.display = "";
+        }
+        else {
+            profile_options = document.getElementById("default-profiles");
+            profile_options.style.display = "";
+        }
+
+        for (ap of aps) {
+            if (network_filter !== "--- Select a Network ---") {
+                var network = ap.getAttribute("network");
+                var profile = ap.getAttribute("profile");
+
+                if (network !== network_filter) {
+                    ap.style.display = "none";
+                }
+                else {
+                    ap.style.display = "";
+                }
+            }
+            else {
+                alert("You must choose a network!")
+            }
+        }
+
+        var edit_table = document.getElementById("edittable-content");
+        edit_table.style.display = "";
+
+    };
+
+    function filterAPsByModel() {
+        var aps = document.getElementById("aps").getElementsByTagName('tbody')[0].rows;
+        var ap_model_filter = document.getElementById("ap-model-select").value;
+        var network_filter = document.getElementById("network-select").value;
+
+        if (ap_model_filter !== "--- Select an AP model ---") {
+            for (ap of aps) {
+                var model = ap.getAttribute("model");
+                var network = ap.getAttribute("network");
+
+                if (model !== ap_model_filter) {
+                    ap.style.display = "none";
+                }
+                else {
+                    if (network == network_filter) {
+                        ap.style.display = "";
+                    }
+                }
+            }        
+        }
+    };
+
+    function clearNetworkFilter() {
+        var aps = document.getElementById("aps").getElementsByTagName('tbody')[0].rows;
+        var ap_select = document.getElementById('ap-model-select');
+        var network_select = document.getElementById('network-select');
+        var edit_table = document.getElementById('edittable-content');
+        var profile_id = `${network_select.value}-profiles`;
+        var profile_options = document.getElementById(profile_id);
+        var select_button = document.getElementById("select-network-button");
+        var clear_button = document.getElementById("clear-network-button");
+
+        select_button.style.display = "";
+        clear_button.style.display = "none";
+
+        if (profile_options) {
+            profile_options.style.display = "none";
+        }
+        else {
+            profile_options = document.getElementById("default-profiles");
+            profile_options.style.display = "none";
+        }
+
+        edit_table.style.display = "none";
+
+        ap_select.value = "--- Select an AP model ---";
+        network_select.value = "--- Select a Network ---";
+
+        for (ap of aps) {
+            ap.style.display = "";
+        }
+
+    };
+
+    function clearModelFilter() {
+        var aps = document.getElementById("aps").getElementsByTagName('tbody')[0].rows;
+        var network_filter = document.getElementById("network-select").value;
+
+        for (ap of aps) {
+            network = ap.getAttribute("network");
+            if (network === network_filter)
+                ap.style.display = "";
+        }
+
+    };
+
+    function changeProfile() {
+        var profile = document.getElementById('rf-profile-select').value;
+        var checked_aps = [];
+
+        $("input:checkbox[name=check-ap]:checked").each(function() {
+            checked_aps.push($(this).val());
+        });
+
+        console.log(`profile: ${profile}, aps: ${checked_aps}`)
+
+        $.ajax(
+        {
+            url: '/changeprofile',
+            type: 'POST',
+            data: JSON.stringify({'serials': checked_aps, 'profile': profile}),
+            contentType: 'application/json',
+            complete: function (response, data) {
+                console.log(response)
+                window.location.replace("/");
+            }
+        });
+    };
+
+    $(function() {
+        $('#select-all').change(function() {
+            var all_checkboxes = document.getElementsByName('check-ap');
+            if (this.checked) {
+                for (checkbox of all_checkboxes) {
+                    checkbox.checked = true;
+                }
+            }
+            else {
+                for (checkbox of all_checkboxes) {
+                    checkbox.checked = false;
+                }
+            }
+        })
+    });
+
+    function selectAll() {
+        var select_all = document.getElementById('select-all').value;
+        var all_checkboxes = document.getElementsByName('check-ap');
+        if (select_all === 'on') {
+            for (checkbox of all_checkboxes) {
+                checkbox.checked = true;
+            }
+        }
+        else {
+            for (checkbox of all_checkboxes) {
+                checkbox.checked = false;
+            }
+        }
+    };
+
+</script>
+
+{% endblock %}
